@@ -37078,7 +37078,7 @@ def sharedebitReportsToEmail(request):
             return redirect(debit_note_reports)
 
 
-#-------------------Arya E.R--------Bill Details----------------------------#
+#-------------------Arya E.R--------Bill Details---------------------------#
 
 def BilldetailsReport(request):
     if 'login_id' in request.session:

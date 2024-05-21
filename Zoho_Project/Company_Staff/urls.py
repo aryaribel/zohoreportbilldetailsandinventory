@@ -830,12 +830,12 @@ urlpatterns = [
     path('sharedebitReportsToEmail',views.sharedebitReportsToEmail, name='sharedebitReportsToEmail'),
 
 
-
+   #---------------Arya E.R-------Bill Details----------------------------#
     path('BilldetailsReport', views.BilldetailsReport, name='BilldetailsReport'),
     path('billdetailsCustomized',views.billdetailsCustomized, name='billdetailsCustomized'),
     path('Share_billDetailsReportToEmail',views.Share_billDetailsReportToEmail, name='Share_billDetailsReportToEmail'),
 
-
+   #---------------------End-------------------------------------------#
 
     re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
 ]
