@@ -714,9 +714,20 @@
                     <hr>
                     {% endif %}
 
+                    {% if allmodules.reports == 1   %}
+                    <a href="{% url 'BilldetailsReport' %}" class="d-flex align-items-center gap-2 dropdown-item">
+                      
+                      <div class="d-flex">
+                        <p class="mb-0 fs-3">Bill Details</p>
+                      </div>
+                     
+                    </a>
+                    <hr>
+                    {% endif %}
                     
                     
                   </div>
+
               </div>
           </li>
             

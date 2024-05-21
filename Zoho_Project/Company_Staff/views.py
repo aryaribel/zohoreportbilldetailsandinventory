@@ -37076,3 +37076,382 @@ def sharedebitReportsToEmail(request):
             print(e)
             messages.error(request, f'{e}')
             return redirect(debit_note_reports)
+
+
+#-------------------Arya E.R--------Bill Details----------------------------#
+
+def BilldetailsReport(request):
+    if 'login_id' in request.session:
+        if request.session.has_key('login_id'):
+            log_id = request.session['login_id']
+           
+        else:
+            return redirect('/')
+    
+        log_details= LoginDetails.objects.get(id=log_id)
+        if log_details.user_type=='Staff':
+            dash_details = StaffDetails.objects.get(login_details=log_details)
+            comp_details=CompanyDetails.objects.get(id=dash_details.company.id)
+
+        else:    
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+            comp_details=CompanyDetails.objects.get(login_details=log_details)
+
+            
+        allmodules= ZohoModules.objects.get(company=comp_details,status='New')
+    
+
+        currentDate = datetime.today()
+
+        reportData = []
+        totalSales = 0
+        totvendr=0
+        totalbalance=0
+
+
+        vendr = Vendor.objects.filter(company=comp_details).values('id')
+
+        bill = Bill.objects.filter(Vendor__in=vendr)
+        # vendr = Vendor.objects.filter(company=comp_details)
+        
+        if bill:
+            for s in bill:
+                partyName = s.Vendor.first_name +" "+s.Vendor.last_name
+                date = s.Bill_Date
+                ship_date = s.Due_Date
+                end_date = datetime.combine(s.Due_Date, datetime.min.time())
+
+                rbill =s.Bill_Number
+                ordrno =s.Purchase_Order_Number
+                total = s.Grand_Total
+                paid=s.Advance_amount_Paid 
+                balance=s.Balance
+                st=s.Status
+                totalSales += float(s.Grand_Total)
+                totalbalance += float(s.Balance)
+                if s.Status == 'Draft':
+                    st = 'Draft'
+                elif int(s.Advance_amount_Paid) == 0 and end_date>currentDate:
+                    st = 'Not paid'
+                    
+                elif int(s.Advance_amount_Paid) == int(s.Grand_Total):
+                    st = 'fully paid'
+                
+                elif int(s.Advance_amount_Paid) > 0 and int(s.Advance_amount_Paid)<int(s.Grand_Total) and end_date>currentDate:
+                    st = 'partially paid'
+                elif end_date<currentDate and int(s.Advance_amount_Paid)<=int(s.Grand_Total):
+                    st = 'overdue'
+                
+                else:
+                    st = s.Status
+
+                details = {
+                    'date': date,
+                    'name': partyName,
+                    'ship_date':ship_date,
+                    'rbill':rbill,
+                    'ordrno': ordrno,
+                    'total':total,
+                    'status':st,
+                    'balance':balance,
+                    
+                    
+                    
+                }
+                reportData.append(details)
+                totvendr=len(vendr)
+
+
+        context = {
+            
+            'details':dash_details,'log_details':log_details,'bill':bill,'vendr':vendr,
+            'allmodules':allmodules,'reportData':reportData,'totalbalance':totalbalance, 'totalSales':totalSales,'totcust':totvendr,
+            'startDate':None, 'endDate':None,
+        }
+        return render(request,'zohomodules/Reports/Billdetails_Report.html', context)
+    else:
+        return redirect('/')
+
+
+def billdetailsCustomized(request):
+    if 'login_id' in request.session:
+        if request.session.has_key('login_id'):
+            log_id = request.session['login_id']
+           
+        else:
+            return redirect('/')
+    
+        log_details= LoginDetails.objects.get(id=log_id)
+        if log_details.user_type=='Staff':
+            dash_details = StaffDetails.objects.get(login_details=log_details)
+            comp_details=CompanyDetails.objects.get(id=dash_details.company.id)
+
+        else:    
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+            comp_details=CompanyDetails.objects.get(login_details=log_details)
+
+            
+        allmodules= ZohoModules.objects.get(company=comp_details,status='New')
+
+        startDate = request.GET.get('start_date', None)
+        endDate = request.GET.get('end_date', None)
+        status = request.GET.get('status')
+        report = request.GET.get('billdate',None)
+
+        currentDate = datetime.today()
+        reportData = []
+        totalSales = 0
+        totvendr=0
+        totalbalance=0
+
+        
+        vendr = Vendor.objects.filter(company=comp_details).values('id')
+        bill = Bill.objects.filter(Vendor__in=vendr)       
+        
+        # if startDate:
+        #     bill = bill.filter(Bill_Date__gte=startDate)
+        # if endDate:
+        #     bill = bill.filter(Due_Date__lte=endDate)    
+        
+        if report:
+            if report=='billdate':
+                bill = bill.filter(Bill_Date__range=[startDate, endDate])
+    
+            if report=='shipdate':
+                bill = bill.filter(Due_Date__range=[startDate, endDate])
+         
+
+        if status:
+            if status == 'Draft':
+                bill = bill.filter(Status = 'Draft')
+            elif status == 'fully paid':
+                bill = bill.filter(Advance_amount_Paid=F('Grand_Total'))
+                
+            elif status == 'Not paid':
+                bill = bill.filter(Q(Advance_amount_Paid=0)  & Q(Due_Date__gt=currentDate))
+
+            elif status == 'partially paid':
+
+                bill = bill.filter(Q(Advance_amount_Paid__gt=0)  & Q(Advance_amount_Paid__lt=F('Grand_Total')) & Q(Due_Date__gt=currentDate))
+            elif status == 'overdue':
+                bill = bill.filter((Q(Due_Date__lte=currentDate) | Q(Advance_amount_Paid__lt=F('Grand_Total')) | Q(Advance_amount_Paid=0)))
+
+        for s in bill:
+            partyName = s.Vendor.first_name +" "+s.Vendor.last_name
+            date = s.Bill_Date
+            ship_date = s.Due_Date
+            end_date = datetime.combine(s.Due_Date, datetime.min.time())
+
+            rbill =s.Bill_Number
+            ordrno =s.Purchase_Order_Number
+            total = s.Grand_Total
+            paid=s.Advance_amount_Paid 
+            balance=s.Balance
+            st=s.Status
+            totalSales += float(s.Grand_Total)
+            totalbalance += float(s.Balance)
+
+            if s.Status == 'Draft':
+                st = 'Draft'
+            elif int(s.Advance_amount_Paid) == 0 and end_date>currentDate:
+                st = 'Not paid'
+                                        
+            elif int(s.Advance_amount_Paid) == int(s.Grand_Total):
+                 st = 'fully paid'
+                
+            elif int(s.Advance_amount_Paid) > 0 and int(s.Advance_amount_Paid)<int(s.Grand_Total) and end_date>currentDate:
+                 st = 'partially paid'
+            elif end_date<currentDate and int(s.Advance_amount_Paid)<=int(s.Grand_Total):
+                 st = 'overdue'
+                
+            else:
+                 st = s.Status            
+            
+
+            details = {
+                'date': date,
+                'name': partyName,
+                'ship_date':ship_date,
+                'rbill':rbill,
+                'ordrno': ordrno,
+                'total':total,
+                'status':st,
+                'balance':balance,
+                
+                
+                
+            }
+            reportData.append(details)
+            totvendr=len(vendr)
+
+        context = {
+            'allmodules': allmodules,'reportData': reportData,'totalbalance':totalbalance,'details':dash_details,'log_details':log_details,'bill':bill,'vendr':vendr,
+            'totalSales': totalSales, 'totcust': totvendr, 'startDate': startDate, 'endDate': endDate, 'status': status,'billdate':report
+        }
+        return render(request, 'zohomodules/Reports/Billdetails_Report.html', context)
+    else:
+        return redirect('/')  
+
+
+
+
+
+def Share_billDetailsReportToEmail(request):
+    if 'login_id' in request.session:
+        if request.session.has_key('login_id'):
+            log_id = request.session['login_id']
+           
+        else:
+            return redirect('/')
+    
+        log_details= LoginDetails.objects.get(id=log_id)
+        if log_details.user_type=='Staff':
+            dash_details = StaffDetails.objects.get(login_details=log_details)
+            comp_details=CompanyDetails.objects.get(id=dash_details.company.id)
+
+        else:    
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+            comp_details=CompanyDetails.objects.get(login_details=log_details)
+
+            
+        allmodules= ZohoModules.objects.get(company=comp_details,status='New')
+    
+        try:
+            if request.method == 'POST':
+                emails_string = request.POST['email_ids']
+
+                # Split the string by commas and remove any leading or trailing whitespace
+                emails_list = [email.strip() for email in emails_string.split(',')]
+                email_message = request.POST['email_message']
+                # print(emails_list)
+                # cust = Fin_Customers.objects.filter(Company=cmp)
+            
+                # cust = Fin_Customers.objects.filter(Company=cmp)
+                startDate = request.POST['start']
+                endDate = request.POST['end']
+                status = request.POST['status']
+                if startDate == "":
+                    startDate = None
+                if endDate == "":
+                    endDate = None
+                
+
+                currentDate = datetime.today()
+
+
+                reportData = []
+                totalSales = 0
+                totvendr=0
+                totalbalance=0
+
+                vendr = Vendor.objects.filter(company=comp_details).values('id')
+                bill = Bill.objects.filter(Vendor__in=vendr)      
+        
+                # if startDate and endDate:
+                #     bill = bill.filter(Bill_Date__range=[startDate, endDate])          
+
+                if report:
+                    if report=='billdate':
+                        bill = bill.filter(Bill_Date__range=[startDate, endDate])
+            
+                    if report=='shipdate':
+                        bill = bill.filter(Due_Date__range=[startDate, endDate])
+            
+
+                if status:
+                    if status == 'Draft':
+                        bill = bill.filter(Status = 'Draft')
+                    elif status == 'fully paid':
+                        bill = bill.filter(Advance_amount_Paid=F('Grand_Total'))
+                        
+                    elif status == 'Not paid':
+                        bill = bill.filter(Q(Advance_amount_Paid=0)  & Q(Due_Date__gt=currentDate))
+
+                    elif status == 'partially paid':
+
+                        bill = bill.filter(Q(Advance_amount_Paid__gt=0)  & Q(Advance_amount_Paid__lt=F('Grand_Total')) & Q(Due_Date__gt=currentDate))
+                    elif status == 'overdue':
+                        bill = bill.filter((Q(Due_Date__lte=currentDate) | Q(Advance_amount_Paid__lt=F('Grand_Total')) | Q(Advance_amount_Paid=0)))
+
+
+                for s in bill:
+                    partyName = s.Vendor.first_name +" "+s.Vendor.last_name
+                    date = s.Bill_Date
+                    ship_date = s.Due_Date
+                    end_date = datetime.combine(s.Due_Date, datetime.min.time())
+
+                    rbill =s.Bill_Number
+                    ordrno =s.Purchase_Order_Number
+                    total = s.Grand_Total
+                    paid=s.Advance_amount_Paid 
+                    balance=s.Balance
+                    st=s.Status
+                    totalSales += float(s.Grand_Total)
+                    totalbalance += float(s.Balance)  
+
+
+                    if s.Status == 'Draft':
+                        st = 'Draft'
+                    elif int(s.Advance_amount_Paid) == 0 and end_date>currentDate:
+                        st = 'Not paid'
+                                                
+                    elif int(s.Advance_amount_Paid) == int(s.Grand_Total):
+                        st = 'fully paid'
+                        
+                    elif int(s.Advance_amount_Paid) > 0 and int(s.Advance_amount_Paid)<int(s.Grand_Total) and end_date>currentDate:
+                        st = 'partially paid'
+                    elif end_date<currentDate and int(s.Advance_amount_Paid)<=int(s.Grand_Total):
+                        st = 'overdue'
+                        
+                    else:
+                        st = s.Status                           
+                                                                  
+                    details = {
+                        'date': date,
+                        'name': partyName,
+                        'ship_date':ship_date,
+                        'rbill':rbill,
+                        'ordrno': ordrno,
+                        'total':total,
+                        'status':st,
+                        'balance':balance,
+                        
+                        
+                        
+                    }
+                    reportData.append(details)
+                    totvendr=len(vendr)
+
+                context = {
+                    'allmodules': allmodules,'reportData': reportData,'totalbalance':totalbalance,'details':dash_details,'log_details':log_details,'bill':bill,'vendr':vendr,
+                    'totalSales': totalSales, 'totcust': totvendr, 'startDate': startDate, 'endDate': endDate, 'status': status,'billdate':report
+        
+                }
+                template_path = 'zohomodules/Reports/Billdetails_Report_Pdf.html'
+                template = get_template(template_path)
+
+                html  = template.render(context)
+                result = BytesIO()
+                pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
+                pdf = result.getvalue()
+                filename = f'Report_bill_Details'
+                subject = f"Report_bill_Details"
+                email = EmailMessage(subject, f"Hi,\nPlease find the attached Report for - bill Details. \n{email_message}\n\n--\nRegards,\n{comp_details.Company_name}\n{comp_details.Address}\n{comp_details.State} - {comp_details.Country}\n{comp_details.Contact}", from_email=settings.EMAIL_HOST_USER, to=emails_list)
+                email.attach(filename, pdf, "application/pdf")
+                email.send(fail_silently=False)
+
+                messages.success(request, 'Report has been shared via email successfully..!')
+                return redirect(BilldetailsReport)
+        except Exception as e:
+            print(e)
+            messages.error(request, f'{e}')
+            return redirect(BilldetailsReport)
+
+    else:
+        return redirect('/')  
+
+#----------------------End--------------------------------------#
+
+#----------------Arya E.R.....Inventory Details-------------------#
+
+

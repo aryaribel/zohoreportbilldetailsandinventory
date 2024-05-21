@@ -829,6 +829,14 @@ urlpatterns = [
     path('debit_note_reports', views.debit_note_reports, name='debit_note_reports'),
     path('sharedebitReportsToEmail',views.sharedebitReportsToEmail, name='sharedebitReportsToEmail'),
 
+
+
+    path('BilldetailsReport', views.BilldetailsReport, name='BilldetailsReport'),
+    path('billdetailsCustomized',views.billdetailsCustomized, name='billdetailsCustomized'),
+    path('Share_billDetailsReportToEmail',views.Share_billDetailsReportToEmail, name='Share_billDetailsReportToEmail'),
+
+
+
     re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS)
