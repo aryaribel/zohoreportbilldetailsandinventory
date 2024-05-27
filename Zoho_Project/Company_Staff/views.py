@@ -37454,4 +37454,203 @@ def Share_billDetailsReportToEmail(request):
 
 #----------------Arya E.R.....Inventory Details-------------------#
 
+def Stock_details_report(request):
+    if 'login_id' in request.session:
+        if request.session.has_key('login_id'):
+            log_id = request.session['login_id']
+           
+        else:
+            return redirect('/')
+    
+        log_details= LoginDetails.objects.get(id=log_id)
+        if log_details.user_type=='Staff':
+            dash_details = StaffDetails.objects.get(login_details=log_details)
+            comp_details=CompanyDetails.objects.get(id=dash_details.company.id)
 
+        else:    
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+            comp_details=CompanyDetails.objects.get(login_details=log_details)
+
+            
+        allmodules= ZohoModules.objects.get(company=comp_details,status='New')
+    
+    
+        iitems = Items.objects.filter(company=comp_details)
+        p_array = []
+        p_array_count = iitems.count
+
+        for i in iitems:
+            item = Items.objects.get(id=i.id)
+            p_total_qty = BillItems.objects.filter(Company=comp_details,item_id=i).values('qty').aggregate(total_qty=Sum('qty'))['total_qty'] or 0
+            s_total_qty = invoiceitems.objects.filter(company=comp_details,Items=i).values('quantity').aggregate(total_qty=Sum('quantity'))['total_qty'] or 0
+            print(p_total_qty ,' and ', s_total_qty)
+            close_qty = int(item.opening_stock) + int(p_total_qty) - int(s_total_qty)
+            p_array.append((item.item_name,item.opening_stock,p_total_qty,item.purchase_price,s_total_qty,item.selling_price,close_qty))
+        
+        context={
+
+ 
+            'details':dash_details,'log_details':log_details,
+
+        'allmodules':allmodules,
+        'p_array':p_array,
+        'companyName':comp_details.company_name,
+        'p_array_count':p_array_count,
+        
+        }
+        return render(request,'zohomodules/Reports/stockdetails_Report.html', context)
+    else:
+        return redirect('/')
+
+
+def Stock_details_date_filter(request):
+    if 'login_id' in request.session:
+        if request.session.has_key('login_id'):
+            log_id = request.session['login_id']
+           
+        else:
+            return redirect('/')
+    
+        log_details= LoginDetails.objects.get(id=log_id)
+        if log_details.user_type=='Staff':
+            dash_details = StaffDetails.objects.get(login_details=log_details)
+            comp_details=CompanyDetails.objects.get(id=dash_details.company.id)
+
+        else:    
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+            comp_details=CompanyDetails.objects.get(login_details=log_details)
+
+            
+        allmodules= ZohoModules.objects.get(company=comp_details,status='New')
+         
+
+        if request.POST:
+
+            startDate = request.POST['from_date']
+            endDate = request.POST['end_date']
+
+            if startDate == "":
+                    return redirect('Stock_details_report')
+            if endDate == "":
+                    return redirect('Stock_details_report')
+
+                
+            
+
+        currentDate = datetime.today()
+
+        iitems = Items.objects.filter(company=comp_details)
+
+        p_array = []
+
+        p_array_count = []
+       
+        for i in iitems:
+            item = Items.objects.get(id=i.id)
+        
+            p_total_qty = BillItems.objects.filter(Company=comp_details,item_id=i,Bills__Bill_Date__gte=startDate,Bills__Bill_Date__lte=endDate).values('qty').aggregate(total_qty=Sum('qty'))['total_qty'] or 0
+            s_total_qty = invoiceitems.objects.filter(company=comp_details,Items=i,invoice__date__gte=startDate,invoice__date__lte=endDate).values('quantity').aggregate(total_qty=Sum('quantity'))['total_qty'] or 0
+            close_qty = int(item.opening_stock) + int(p_total_qty) - int(s_total_qty)
+            if p_total_qty != 0 or s_total_qty !=0 :               
+
+                p_array.append((item.item_name, item.opening_stock, p_total_qty, item.purchase_price, s_total_qty, item.selling_price, close_qty))
+        p_array_count = len(p_array)
+                               
+               
+                 
+
+        context = {
+            'allmodules': allmodules,'details':dash_details,'log_details':log_details,
+        'startDate': startDate, 'endDate': endDate, 'p_array':p_array,
+        'companyName':comp_details.company_name, 'p_array_count':p_array_count,
+        }
+        return render(request, 'zohomodules/Reports/stockdetails_Report.html', context)
+    else:
+        return redirect('/')    
+
+
+def SendEmail_Stock_Details(request):
+    if 'login_id' in request.session:
+        if request.session.has_key('login_id'):
+            log_id = request.session['login_id']
+           
+        else:
+            return redirect('/')
+    
+        log_details= LoginDetails.objects.get(id=log_id)
+        if log_details.user_type=='Staff':
+            dash_details = StaffDetails.objects.get(login_details=log_details)
+            comp_details=CompanyDetails.objects.get(id=dash_details.company.id)
+
+        else:    
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+            comp_details=CompanyDetails.objects.get(login_details=log_details)
+
+            
+        allmodules= ZohoModules.objects.get(company=comp_details,status='New')   
+
+        
+       
+        try:
+            if request.method == 'POST':
+                emails_string = request.POST['email_ids']
+                # Split the string by commas and remove any leading or trailing whitespace
+                emails_list = [email.strip() for email in emails_string.split(',')]
+                email_message = request.POST['email_message']
+                # print(emails_list)
+                
+                start_date = request.POST.get('start_date') or None
+                end_date = request.POST.get('end_date') or None
+                Countt = request.POST.get('stockCount')
+                print(Countt,'oooooooollllllloooooooooooooooollllll \n \n \n')
+
+
+                iitems = Items.objects.filter(company=comp_details)
+
+                p_array = []
+
+                if start_date != None and end_date != None:
+                  for i in iitems:
+                    item = Items.objects.get(id=i.id)
+
+                    p_total_qty = BillItems.objects.filter(Company=comp_details,item_id=i,Bills__Bill_Date__gte=startDate,Bills__Bill_Date__lte=endDate).values('qty').aggregate(total_qty=Sum('qty'))['total_qty'] or 0
+                    s_total_qty = invoiceitems.objects.filter(company=comp_details,Items=i,invoice__date__gte=startDate,invoice__date__lte=endDate).values('quantity').aggregate(total_qty=Sum('quantity'))['total_qty'] or 0
+                    print(p_total_qty ,' and ', s_total_qty)
+                    close_qty = int(item.opening_stock) + int(p_total_qty) - int(s_total_qty)
+                    p_array.append((item.item_name, item.opening_stock, p_total_qty, item.purchase_price, s_total_qty, item.selling_price, close_qty))
+                    
+                else:
+                  for i in iitems:
+                    item = Items.objects.get(id=i.id)
+                    p_total_qty = BillItems.objects.filter(Company=comp_details,item_id=i).values('qty').aggregate(total_qty=Sum('qty'))['total_qty'] or 0
+                    s_total_qty = invoiceitems.objects.filter(company=comp_details,Items=i).values('quantity').aggregate(total_qty=Sum('quantity'))['total_qty'] or 0
+                    print(p_total_qty ,' and ', s_total_qty)
+                    close_qty = int(item.opening_stock) + int(p_total_qty) - int(s_total_qty)
+                    p_array.append((item.item_name, item.opening_stock, p_total_qty, item.purchase_price, s_total_qty, item.selling_price, close_qty))
+                    
+                context = { 'stocklist':p_array,'companyName':comp_details.company_name,
+                       'start_date':start_date,'end_date':end_date,'stockCount':Countt,'details':dash_details,'log_details':log_details,'allmodules': allmodules,}
+                
+                template_path = 'zohomodules/Reports/stockdetails_Report_Pdf.html'
+                template = get_template(template_path)
+                html  = template.render(context)
+                result = BytesIO()
+                # pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
+                pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
+                pdf = result.getvalue()
+                filename = f'Stock Details'
+                subject = f"Stock Details"
+                from django.core.mail import EmailMessage as EmailMsg
+                email = EmailMsg(subject, f"Hi,\nPlease find the attached Stock Details for   \n{email_message}\n\n--\nRegards,\n{comp_details.company_name}\n{comp_details.address}\n{comp_details.state} - {comp_details.country}\n{comp_details.contact}", from_email=settings.EMAIL_HOST_USER, to=emails_list)
+                email.attach(filename, pdf, "application/pdf")
+                email.send(fail_silently=False)
+
+                messages.success(request, 'Stock Details has been shared via email successfully..!')
+                return redirect(Stock_details_report)
+        except Exception as e:
+            print(e)
+            messages.error(request, f'{e}')
+            return redirect(Stock_details_report)             
+
+    else:
+        return redirect('/')            
