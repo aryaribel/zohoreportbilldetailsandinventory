@@ -37608,16 +37608,22 @@ def SendEmail_Stock_Details(request):
                 iitems = Items.objects.filter(company=comp_details)
 
                 p_array = []
+                p_array_count = []
+
 
                 if start_date != None and end_date != None:
                   for i in iitems:
                     item = Items.objects.get(id=i.id)
 
-                    p_total_qty = BillItems.objects.filter(Company=comp_details,item_id=i,Bills__Bill_Date__gte=startDate,Bills__Bill_Date__lte=endDate).values('qty').aggregate(total_qty=Sum('qty'))['total_qty'] or 0
-                    s_total_qty = invoiceitems.objects.filter(company=comp_details,Items=i,invoice__date__gte=startDate,invoice__date__lte=endDate).values('quantity').aggregate(total_qty=Sum('quantity'))['total_qty'] or 0
+                    p_total_qty = BillItems.objects.filter(Company=comp_details,item_id=i,Bills__Bill_Date__gte=start_date,Bills__Bill_Date__lte=end_date).values('qty').aggregate(total_qty=Sum('qty'))['total_qty'] or 0
+                    s_total_qty = invoiceitems.objects.filter(company=comp_details,Items=i,invoice__date__gte=start_date,invoice__date__lte=end_date).values('quantity').aggregate(total_qty=Sum('quantity'))['total_qty'] or 0
                     print(p_total_qty ,' and ', s_total_qty)
                     close_qty = int(item.opening_stock) + int(p_total_qty) - int(s_total_qty)
-                    p_array.append((item.item_name, item.opening_stock, p_total_qty, item.purchase_price, s_total_qty, item.selling_price, close_qty))
+                    if p_total_qty != 0 or s_total_qty !=0 :               
+
+                         p_array.append((item.item_name, item.opening_stock, p_total_qty, item.purchase_price, s_total_qty, item.selling_price, close_qty))
+                  p_array_count = len(p_array)
+  
                     
                 else:
                   for i in iitems:
@@ -37627,8 +37633,10 @@ def SendEmail_Stock_Details(request):
                     print(p_total_qty ,' and ', s_total_qty)
                     close_qty = int(item.opening_stock) + int(p_total_qty) - int(s_total_qty)
                     p_array.append((item.item_name, item.opening_stock, p_total_qty, item.purchase_price, s_total_qty, item.selling_price, close_qty))
+                    p_array_count = len(p_array)
+
                     
-                context = { 'stocklist':p_array,'companyName':comp_details.company_name,
+                context = { 'stocklist':p_array,'companyName':comp_details.company_name,'p_array_count':p_array_count,
                        'start_date':start_date,'end_date':end_date,'stockCount':Countt,'details':dash_details,'log_details':log_details,'allmodules': allmodules,}
                 
                 template_path = 'zohomodules/Reports/stockdetails_Report_Pdf.html'
