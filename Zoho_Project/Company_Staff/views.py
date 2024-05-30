@@ -37129,21 +37129,7 @@ def BilldetailsReport(request):
                 st=s.Status
                 totalSales += float(s.Grand_Total)
                 totalbalance += float(s.Balance)
-                if s.Status == 'Draft':
-                    st = 'Draft'
-                elif int(s.Advance_amount_Paid) == 0 and end_date>currentDate:
-                    st = 'Not paid'
-                    
-                elif int(s.Advance_amount_Paid) == int(s.Grand_Total):
-                    st = 'fully paid'
-                
-                elif int(s.Advance_amount_Paid) > 0 and int(s.Advance_amount_Paid)<int(s.Grand_Total) and end_date>currentDate:
-                    st = 'partially paid'
-                elif end_date<currentDate and int(s.Advance_amount_Paid)<=int(s.Grand_Total):
-                    st = 'overdue'
-                
-                else:
-                    st = s.Status
+               
 
                 details = {
                     'date': date,
@@ -37152,7 +37138,7 @@ def BilldetailsReport(request):
                     'rbill':rbill,
                     'ordrno': ordrno,
                     'total':total,
-                    'status':st,
+                    'status':s.Status,
                     'balance':balance,
                     
                     
@@ -37225,16 +37211,16 @@ def billdetailsCustomized(request):
             if status == 'Draft':
                 bill = bill.filter(Status = 'Draft')
             elif status == 'fully paid':
-                bill = bill.filter(Advance_amount_Paid=F('Grand_Total'))
+                bill = bill.filter(Advance_amount_Paid=F('Grand_Total') , Status='fully paid')
                 
             elif status == 'Not paid':
-                bill = bill.filter(Q(Advance_amount_Paid=0)  & Q(Due_Date__gt=currentDate))
+                bill = bill.filter(Q(Advance_amount_Paid=0.00)  & Q(Due_Date__gt=currentDate) & Q(Status='Not paid'))
 
             elif status == 'partially paid':
 
-                bill = bill.filter(Q(Advance_amount_Paid__gt=0)  & Q(Advance_amount_Paid__lt=F('Grand_Total')) & Q(Due_Date__gt=currentDate))
+                bill = bill.filter(Q(Advance_amount_Paid__gt=0.00)  & Q(Advance_amount_Paid__lt=F('Grand_Total')) & Q(Due_Date__gt=currentDate) & Q(Status='partially paid'))
             elif status == 'overdue':
-                bill = bill.filter((Q(Due_Date__lte=currentDate) | Q(Advance_amount_Paid__lt=F('Grand_Total')) | Q(Advance_amount_Paid=0)))
+                bill = bill.filter((Q(Due_Date__lte=currentDate) | Q(Advance_amount_Paid__lt=F('Grand_Total')) | Q(Advance_amount_Paid=0)) & Q(Status='overdue'))
 
         for s in bill:
             partyName = s.Vendor.first_name +" "+s.Vendor.last_name
@@ -37251,21 +37237,7 @@ def billdetailsCustomized(request):
             totalSales += float(s.Grand_Total)
             totalbalance += float(s.Balance)
 
-            if s.Status == 'Draft':
-                st = 'Draft'
-            elif int(s.Advance_amount_Paid) == 0 and end_date>currentDate:
-                st = 'Not paid'
-                                        
-            elif int(s.Advance_amount_Paid) == int(s.Grand_Total):
-                 st = 'fully paid'
-                
-            elif int(s.Advance_amount_Paid) > 0 and int(s.Advance_amount_Paid)<int(s.Grand_Total) and end_date>currentDate:
-                 st = 'partially paid'
-            elif end_date<currentDate and int(s.Advance_amount_Paid)<=int(s.Grand_Total):
-                 st = 'overdue'
-                
-            else:
-                 st = s.Status            
+                    
             
 
             details = {
@@ -37275,7 +37247,7 @@ def billdetailsCustomized(request):
                 'rbill':rbill,
                 'ordrno': ordrno,
                 'total':total,
-                'status':st,
+                'status':s.Status,
                 'balance':balance,
                 
                 
@@ -37343,6 +37315,7 @@ def Share_billDetailsReportToEmail(request):
                 totalSales = 0
                 totvendr=0
                 totalbalance=0
+                report=0
 
                 vendr = Vendor.objects.filter(company=comp_details).values('id')
                 bill = Bill.objects.filter(Vendor__in=vendr)      
@@ -37362,16 +37335,16 @@ def Share_billDetailsReportToEmail(request):
                     if status == 'Draft':
                         bill = bill.filter(Status = 'Draft')
                     elif status == 'fully paid':
-                        bill = bill.filter(Advance_amount_Paid=F('Grand_Total'))
+                        bill = bill.filter(Advance_amount_Paid=F('Grand_Total') ,Status='fully paid')
                         
                     elif status == 'Not paid':
-                        bill = bill.filter(Q(Advance_amount_Paid=0)  & Q(Due_Date__gt=currentDate))
+                        bill = bill.filter(Q(Advance_amount_Paid=0.00)  & Q(Due_Date__gt=currentDate) & Q(Status='Not paid'))
 
                     elif status == 'partially paid':
 
-                        bill = bill.filter(Q(Advance_amount_Paid__gt=0)  & Q(Advance_amount_Paid__lt=F('Grand_Total')) & Q(Due_Date__gt=currentDate))
+                        bill = bill.filter(Q(Advance_amount_Paid__gt=0.00)  & Q(Advance_amount_Paid__lt=F('Grand_Total')) & Q(Due_Date__gt=currentDate) & Q(Status='partially paid'))
                     elif status == 'overdue':
-                        bill = bill.filter((Q(Due_Date__lte=currentDate) | Q(Advance_amount_Paid__lt=F('Grand_Total')) | Q(Advance_amount_Paid=0)))
+                        bill = bill.filter((Q(Due_Date__lte=currentDate) | Q(Advance_amount_Paid__lt=F('Grand_Total')) | Q(Advance_amount_Paid=0)) & Q(Status='overdue'))
 
 
                 for s in bill:
@@ -37390,21 +37363,7 @@ def Share_billDetailsReportToEmail(request):
                     totalbalance += float(s.Balance)  
 
 
-                    if s.Status == 'Draft':
-                        st = 'Draft'
-                    elif int(s.Advance_amount_Paid) == 0 and end_date>currentDate:
-                        st = 'Not paid'
-                                                
-                    elif int(s.Advance_amount_Paid) == int(s.Grand_Total):
-                        st = 'fully paid'
-                        
-                    elif int(s.Advance_amount_Paid) > 0 and int(s.Advance_amount_Paid)<int(s.Grand_Total) and end_date>currentDate:
-                        st = 'partially paid'
-                    elif end_date<currentDate and int(s.Advance_amount_Paid)<=int(s.Grand_Total):
-                        st = 'overdue'
-                        
-                    else:
-                        st = s.Status                           
+                                         
                                                                   
                     details = {
                         'date': date,
@@ -37413,7 +37372,7 @@ def Share_billDetailsReportToEmail(request):
                         'rbill':rbill,
                         'ordrno': ordrno,
                         'total':total,
-                        'status':st,
+                        'status':s.Status,
                         'balance':balance,
                         
                         
@@ -37424,7 +37383,7 @@ def Share_billDetailsReportToEmail(request):
 
                 context = {
                     'allmodules': allmodules,'reportData': reportData,'totalbalance':totalbalance,'details':dash_details,'log_details':log_details,'bill':bill,'vendr':vendr,
-                    'totalSales': totalSales, 'totcust': totvendr, 'startDate': startDate, 'endDate': endDate, 'status': status,'billdate':report
+                    'totalSales': totalSales, 'totcust': totvendr, 'startDate': startDate, 'endDate': endDate, 'status': status,
         
                 }
                 template_path = 'zohomodules/Reports/Billdetails_Report_Pdf.html'
@@ -37436,12 +37395,17 @@ def Share_billDetailsReportToEmail(request):
                 pdf = result.getvalue()
                 filename = f'Report_bill_Details'
                 subject = f"Report_bill_Details"
-                email = EmailMessage(subject, f"Hi,\nPlease find the attached Report for - bill Details. \n{email_message}\n\n--\nRegards,\n{comp_details.Company_name}\n{comp_details.Address}\n{comp_details.State} - {comp_details.Country}\n{comp_details.Contact}", from_email=settings.EMAIL_HOST_USER, to=emails_list)
+                from django.core.mail import EmailMessage as EmailMsg
+                email = EmailMsg(subject, f"Hi,\nPlease find the attached Report for - bill Details.  \n{email_message}\n\n--\nRegards,\n{comp_details.company_name}\n{comp_details.address}\n{comp_details.state} - {comp_details.country}\n{comp_details.contact}", from_email=settings.EMAIL_HOST_USER, to=emails_list)
+
+                # email = EmailMessage(subject, f"Hi,\nPlease find the attached Report for - bill Details. \n{email_message}\n\n--\nRegards,\n{comp_details.company_name}\n{comp_details.address}\n{comp_details.state} - {comp_details.country}\n{comp_details.contact}", from_email=settings.EMAIL_HOST_USER, to=emails_list)
                 email.attach(filename, pdf, "application/pdf")
                 email.send(fail_silently=False)
 
                 messages.success(request, 'Report has been shared via email successfully..!')
                 return redirect(BilldetailsReport)
+                
+
         except Exception as e:
             print(e)
             messages.error(request, f'{e}')
@@ -37601,8 +37565,6 @@ def SendEmail_Stock_Details(request):
                 
                 start_date = request.POST.get('start_date') or None
                 end_date = request.POST.get('end_date') or None
-                Countt = request.POST.get('stockCount')
-                print(Countt,'oooooooollllllloooooooooooooooollllll \n \n \n')
 
 
                 iitems = Items.objects.filter(company=comp_details)
@@ -37630,14 +37592,14 @@ def SendEmail_Stock_Details(request):
                     item = Items.objects.get(id=i.id)
                     p_total_qty = BillItems.objects.filter(Company=comp_details,item_id=i).values('qty').aggregate(total_qty=Sum('qty'))['total_qty'] or 0
                     s_total_qty = invoiceitems.objects.filter(company=comp_details,Items=i).values('quantity').aggregate(total_qty=Sum('quantity'))['total_qty'] or 0
-                    print(p_total_qty ,' and ', s_total_qty)
                     close_qty = int(item.opening_stock) + int(p_total_qty) - int(s_total_qty)
-                    p_array.append((item.item_name, item.opening_stock, p_total_qty, item.purchase_price, s_total_qty, item.selling_price, close_qty))
-                    p_array_count = len(p_array)
+                    if p_total_qty != 0 or s_total_qty !=0 : 
+                        p_array.append((item.item_name, item.opening_stock, p_total_qty, item.purchase_price, s_total_qty, item.selling_price, close_qty))
+                  p_array_count = len(p_array)
 
                     
-                context = { 'stocklist':p_array,'companyName':comp_details.company_name,'p_array_count':p_array_count,
-                       'start_date':start_date,'end_date':end_date,'stockCount':Countt,'details':dash_details,'log_details':log_details,'allmodules': allmodules,}
+                context = {'companyName':comp_details.company_name,'p_array_count':p_array_count,'p_array':p_array,
+                       'start_date':start_date,'end_date':end_date,'details':dash_details,'log_details':log_details,}
                 
                 template_path = 'zohomodules/Reports/stockdetails_Report_Pdf.html'
                 template = get_template(template_path)

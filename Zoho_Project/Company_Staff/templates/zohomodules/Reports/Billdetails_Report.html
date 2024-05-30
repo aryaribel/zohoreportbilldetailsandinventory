@@ -227,7 +227,7 @@
                                         <select name="status" id="salesStatus" class="form-control" style="background:black;color:white;">
                                             <option value="all">All</option>
                                             <option value="Draft" {% if status_filter == "Draft" %} selected {% endif %}>Draft</option>
-                                            <option value="Not paid" {% if status_filter == "Not paid" %} selected {% endif %}>Not paid</option>
+                                            <option value="Not paid" {% if status_filter == "Not paid" %} selected {% endif %}>Not Paid</option>
                                             <option value="fully paid" {% if status_filter == "fully paid" %} selected {% endif %}>Fully Paid</option>
                                             <option value="partially paid" {% if status_filter == "partially paid" %} selected {% endif %}>Partially Paid</option>
                                             <option value="overdue" {% if status_filter == "overdue" %} selected {% endif %}>Overdue</option>
@@ -331,6 +331,18 @@
                 </div>
             </div>
 
+
+
+            <div>
+                {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+              </div>
+            
                  
                    
                     <!-- price lists table -->

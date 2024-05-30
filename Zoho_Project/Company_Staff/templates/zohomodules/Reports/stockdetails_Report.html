@@ -316,6 +316,22 @@
 
 
 
+  <div>
+    {% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+  </div>
+
+
+
+
+
+
+
                     <!-- price lists table -->
                     <div class="table-responsive " style="overflow-x:auto;margin-top: 20px;">
                         <div class="card radius-15 print-only" id="pdf-card" style="background-color: #000;">
@@ -362,18 +378,7 @@
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
-                                                                    <!-- {% for i in JrnAcc %}
-                                                <tr>
-                                                    <td class="text-center">{{i.journal.status}}</td>
-
-                                                    <td class="text-center">{{i.journal.date}}</td>
-                                                    <td class="text-center">{{i.journal.journal_no}}</td>
-
-                                                    <td class="text-center">{{i.account}}</td>
-                                                    <td class="text-center">Rs. {{i.journal.total_debit|floatformat:2 }}</td>
-                                                    <td class="text-center">Rs. {{i.journal.total_credit|floatformat:2 }}</td>
-                                                </tr>
-                                                {% endfor %} -->
+                                                                
                                                                     {% for i,j,k,l,m,n,o in p_array %}
                                                                     <tr>
                                                                         <td>{{i}}</td>
@@ -425,7 +430,7 @@
                     <div class="modal-dialog">
                         <div class="modal-content" style="background-color: #3b3b3b;">
                             <div class="modal-header">
-                                <h3 class="modal-title text-light" id="exampleModalLabel">Share Journal Details</h3>
+                                <h3 class="modal-title text-light" id="exampleModalLabel">Share inventory Details</h3>
                                 <button type="button" class="btn close" data-dismiss="modal" aria-label="Close">
                                     <span aria-hidden="true" style="font-size: x-large;">&times;</span>
                                 </button>
@@ -568,7 +573,7 @@
                         var opt =
                         {
                             margin: [0.5, 0.3, 0.3, 0.5],
-                            filename: 'Journal_report',
+                            filename: 'stockdetails_report',
                             image: { type: 'jpeg', quality: 0.98 },
                             html2canvas: { scale: 2 },
                             jsPDF: { unit: 'cm', format: 'letter', orientation: 'portrait' }
@@ -594,7 +599,7 @@
                         const ws = XLSX.utils.table_to_sheet(Table);
                         const wb = XLSX.utils.book_new();
                         XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-                        XLSX.writeFile(wb, "journal_report.pdf.xlsx");
+                        XLSX.writeFile(wb, "stockdetails_report.pdf.xlsx");
                     }
 
                     let sortOrder = false; // false for ascending, true for descending

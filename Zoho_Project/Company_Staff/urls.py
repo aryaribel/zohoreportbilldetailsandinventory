@@ -843,7 +843,6 @@ urlpatterns = [
    path('Stock_details_date_filter', views.Stock_details_date_filter, name='Stock_details_date_filter'),
    path('SendEmail_Stock_Details', views.SendEmail_Stock_Details, name='SendEmail_Stock_Details'),
 
-
    #----------------End------------------------------------------------#
 
     re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
