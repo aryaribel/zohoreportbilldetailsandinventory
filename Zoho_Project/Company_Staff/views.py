@@ -37129,6 +37129,22 @@ def BilldetailsReport(request):
                 st=s.Status
                 totalSales += float(s.Grand_Total)
                 totalbalance += float(s.Balance)
+
+                if s.Status == 'Draft':
+                    st = 'Draft'
+                elif int(s.Advance_amount_Paid) == 0 and end_date>currentDate:
+                    st = 'Not paid'
+                        
+                elif int(s.Advance_amount_Paid) == int(s.Grand_Total):
+                    st = 'fully paid'
+                    
+                elif int(s.Advance_amount_Paid) > 0 and int(s.Advance_amount_Paid)<int(s.Grand_Total) and end_date>currentDate:
+                    st = 'partially paid'
+                elif end_date<currentDate and int(s.Advance_amount_Paid)<=int(s.Grand_Total):
+                    st = 'overdue'
+                    
+                else:
+                    st = s.Status
                
 
                 details = {
@@ -37138,7 +37154,7 @@ def BilldetailsReport(request):
                     'rbill':rbill,
                     'ordrno': ordrno,
                     'total':total,
-                    'status':s.Status,
+                    'status':st,
                     'balance':balance,
                     
                     
@@ -37237,6 +37253,22 @@ def billdetailsCustomized(request):
             totalSales += float(s.Grand_Total)
             totalbalance += float(s.Balance)
 
+            if s.Status == 'Draft':
+                st = 'Draft'
+            elif int(s.Advance_amount_Paid) == 0 and end_date>currentDate:
+                st = 'Not paid'
+                
+            elif int(s.Advance_amount_Paid) == int(s.Grand_Total):
+                st = 'fully paid'
+            
+            elif int(s.Advance_amount_Paid) > 0 and int(s.Advance_amount_Paid)<int(s.Grand_Total) and end_date>currentDate:
+                st = 'partially paid'
+            elif end_date<currentDate and int(s.Advance_amount_Paid)<=int(s.Grand_Total):
+                st = 'overdue'
+            
+            else:
+                st = s.Status
+
                     
             
 
@@ -37247,7 +37279,7 @@ def billdetailsCustomized(request):
                 'rbill':rbill,
                 'ordrno': ordrno,
                 'total':total,
-                'status':s.Status,
+                'status':st,
                 'balance':balance,
                 
                 
@@ -37362,8 +37394,22 @@ def Share_billDetailsReportToEmail(request):
                     totalSales += float(s.Grand_Total)
                     totalbalance += float(s.Balance)  
 
-
-                                         
+                    if s.Status == 'Draft':
+                        st = 'Draft'
+                    elif int(s.Advance_amount_Paid) == 0 and end_date>currentDate:
+                        st = 'Not paid'
+                        
+                    elif int(s.Advance_amount_Paid) == int(s.Grand_Total):
+                        st = 'fully paid'
+                    
+                    elif int(s.Advance_amount_Paid) > 0 and int(s.Advance_amount_Paid)<int(s.Grand_Total) and end_date>currentDate:
+                        st = 'partially paid'
+                    elif end_date<currentDate and int(s.Advance_amount_Paid)<=int(s.Grand_Total):
+                        st = 'overdue'
+                    
+                    else:
+                        st = s.Status
+                                                
                                                                   
                     details = {
                         'date': date,
@@ -37372,7 +37418,7 @@ def Share_billDetailsReportToEmail(request):
                         'rbill':rbill,
                         'ordrno': ordrno,
                         'total':total,
-                        'status':s.Status,
+                        'status':st,
                         'balance':balance,
                         
                         

@@ -264,7 +264,7 @@
                             const ws = XLSX.utils.table_to_sheet(Table);
                             const wb = XLSX.utils.book_new();
                             XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-                            XLSX.writeFile(wb, "Report__Rec_inv_Details"+date+".xlsx");
+                            XLSX.writeFile(wb, "Bill_Details"+date+".xlsx");
                         }
                     </script>                            
                             
@@ -287,7 +287,7 @@
                             var opt =
                             {
                                 margin: [0.5, 0.3, 0.3, 0.5],
-                                filename: 'Report_Rec_inv_Details' + date,
+                                filename: 'Bill_Details' + date,
                                 image: { type: 'jpeg', quality: 0.98 },
                                 html2canvas: { scale: 2 },
                                 jsPDF: { unit: 'cm', format: 'letter', orientation: 'portrait' }
